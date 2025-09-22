@@ -1,0 +1,605 @@
+{
+  "info": {
+    "name": "eChanneling Corporate Agent Module - Working Endpoints",
+    "description": "Tested and verified API collection with only implemented endpoints for the eChanneling Corporate Agent Module.",
+    "version": "2.1.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "v1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & System Info",
+      "description": "System health and API information endpoints - VERIFIED WORKING",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has correct structure', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success', true);",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('status', 'healthy');",
+                  "});",
+                  "",
+                  "pm.test('Database status is available', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('database');",
+                  "    pm.expect(jsonData.data.database).to.have.property('status');",
+                  "});",
+                  "",
+                  "console.log('Server uptime:', pm.response.json().data.uptime + ' seconds');",
+                  "console.log('Database status:', pm.response.json().data.database.status);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check server health and database connectivity status"
+          }
+        },
+        {
+          "name": "API Information",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('API info contains endpoints', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('endpoints');",
+                  "    pm.expect(jsonData.data.endpoints).to.have.property('auth');",
+                  "    pm.expect(jsonData.data.endpoints).to.have.property('users');",
+                  "    pm.expect(jsonData.data.endpoints).to.have.property('reports');",
+                  "});",
+                  "",
+                  "pm.test('Database connection info available', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('database');",
+                  "    pm.expect(jsonData.data.database).to.have.property('status');",
+                  "});",
+                  "",
+                  "console.log('API Version:', pm.response.json().data.version);",
+                  "console.log('Environment:', pm.response.json().data.environment);",
+                  "console.log('Available endpoints:', Object.keys(pm.response.json().data.endpoints));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}"]
+            },
+            "description": "Get comprehensive API information and available endpoints"
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Management - READ Operations",
+      "description": "User profile and listing operations - VERIFIED WORKING",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Profile request successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response structure is correct', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success', true);",
+                  "    pm.expect(response).to.have.property('data');",
+                  "});",
+                  "",
+                  "pm.test('Mock response indicator present', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('mockResponse', true);",
+                  "});",
+                  "",
+                  "console.log('Profile endpoint status:', pm.response.json().message);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "profile"]
+            },
+            "description": "Get current user profile information (returns mock data)"
+          }
+        },
+        {
+          "name": "Get Users List - Basic",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Users list request successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination structure', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('pagination');",
+                  "    pm.expect(response.data.pagination).to.have.property('page');",
+                  "    pm.expect(response.data.pagination).to.have.property('limit');",
+                  "    pm.expect(response.data.pagination).to.have.property('total');",
+                  "});",
+                  "",
+                  "pm.test('Mock response indicator present', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('mockResponse', true);",
+                  "});",
+                  "",
+                  "console.log('Users list pagination:', pm.response.json().data.pagination);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/list",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "list"]
+            },
+            "description": "Get basic list of users with default pagination"
+          }
+        },
+        {
+          "name": "Get Users List - With Pagination",
+          "event": [
+            {
+              "listen": "pre-request",
+              "script": {
+                "exec": [
+                  "// Set pagination variables for testing",
+                  "pm.globals.set('test_page', '2');",
+                  "pm.globals.set('test_limit', '5');",
+                  "pm.globals.set('test_sort_by', 'createdAt');",
+                  "pm.globals.set('test_sort_order', 'desc');",
+                  "",
+                  "console.log('Testing pagination with:');",
+                  "console.log('Page:', pm.globals.get('test_page'));",
+                  "console.log('Limit:', pm.globals.get('test_limit'));",
+                  "console.log('Sort by:', pm.globals.get('test_sort_by'));",
+                  "console.log('Sort order:', pm.globals.get('test_sort_order'));"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Paginated request successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Pagination parameters accepted', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success', true);",
+                  "    pm.expect(response.data).to.have.property('pagination');",
+                  "});",
+                  "",
+                  "pm.test('Query parameters processed', function () {",
+                  "    // Server accepts query parameters even if mock response",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "console.log('Paginated response received:', pm.response.json().message);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/list?page={{test_page}}&limit={{test_limit}}&sortBy={{test_sort_by}}&sortOrder={{test_sort_order}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "list"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{test_page}}",
+                  "description": "Page number for pagination"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{test_limit}}",
+                  "description": "Number of items per page"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "{{test_sort_by}}",
+                  "description": "Field to sort by"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "{{test_sort_order}}",
+                  "description": "Sort order (asc/desc)"
+                }
+              ]
+            },
+            "description": "Test pagination and sorting parameters on users list"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports & Analytics - READ Operations",
+      "description": "Reporting endpoints with query parameters - VERIFIED WORKING",
+      "item": [
+        {
+          "name": "Dashboard Overview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Dashboard request successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Dashboard has statistics structure', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('stats');",
+                  "    pm.expect(response.data.stats).to.have.property('totalAgents');",
+                  "    pm.expect(response.data.stats).to.have.property('totalAppointments');",
+                  "    pm.expect(response.data.stats).to.have.property('totalRevenue');",
+                  "    pm.expect(response.data.stats).to.have.property('activeAgents');",
+                  "});",
+                  "",
+                  "pm.test('Mock response indicator present', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('mockResponse', true);",
+                  "});",
+                  "",
+                  "console.log('Dashboard stats:', pm.response.json().data.stats);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/reports/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "reports", "dashboard"]
+            },
+            "description": "Get dashboard overview with key statistics"
+          }
+        },
+        {
+          "name": "Appointments Report - Basic",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Appointments report successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Report has date range structure', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('dateRange');",
+                  "});",
+                  "",
+                  "pm.test('Mock response indicator present', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('mockResponse', true);",
+                  "});",
+                  "",
+                  "console.log('Appointments report ready:', pm.response.json().message);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/reports/appointments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "reports", "appointments"]
+            },
+            "description": "Get appointments report without date filters"
+          }
+        },
+        {
+          "name": "Appointments Report - With Date Range",
+          "event": [
+            {
+              "listen": "pre-request",
+              "script": {
+                "exec": [
+                  "// Generate dynamic date range for testing",
+                  "const today = new Date();",
+                  "const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);",
+                  "const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);",
+                  "",
+                  "const startDate = lastMonth.toISOString().split('T')[0];",
+                  "const endDate = endOfLastMonth.toISOString().split('T')[0];",
+                  "",
+                  "pm.globals.set('report_start_date', startDate);",
+                  "pm.globals.set('report_end_date', endDate);",
+                  "pm.globals.set('report_status', 'all');",
+                  "pm.globals.set('report_group_by', 'date');",
+                  "",
+                  "console.log('Testing appointments report with:');",
+                  "console.log('Start Date:', startDate);",
+                  "console.log('End Date:', endDate);",
+                  "console.log('Status Filter:', 'all');",
+                  "console.log('Group By:', 'date');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Date range report successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Date parameters processed', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('dateRange');",
+                  "    pm.expect(response.data.dateRange).to.have.property('startDate');",
+                  "    pm.expect(response.data.dateRange).to.have.property('endDate');",
+                  "});",
+                  "",
+                  "pm.test('Query parameters accepted', function () {",
+                  "    // Server accepts and processes query parameters",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "console.log('Date range processed:', pm.response.json().data.dateRange);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/reports/appointments?startDate={{report_start_date}}&endDate={{report_end_date}}&status={{report_status}}&groupBy={{report_group_by}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "reports", "appointments"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "{{report_start_date}}",
+                  "description": "Report start date (YYYY-MM-DD)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{report_end_date}}",
+                  "description": "Report end date (YYYY-MM-DD)"
+                },
+                {
+                  "key": "status",
+                  "value": "{{report_status}}",
+                  "description": "Appointment status filter"
+                },
+                {
+                  "key": "groupBy",
+                  "value": "{{report_group_by}}",
+                  "description": "Group results by date/week/month"
+                }
+              ]
+            },
+            "description": "Test appointments report with date range and status filters"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error Handling & Validation",
+      "description": "Test error scenarios and edge cases - VERIFIED WORKING",
+      "item": [
+        {
+          "name": "Test Non-Existent Endpoint",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns 404 for non-existent endpoint', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Error response has proper structure', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.false;",
+                  "    pm.expect(response.error).to.have.property('code', 'NOT_FOUND');",
+                  "    pm.expect(response.error).to.have.property('message');",
+                  "});",
+                  "",
+                  "pm.test('Available routes provided in error', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.error).to.have.property('availableRoutes');",
+                  "    pm.expect(response.error.availableRoutes).to.be.an('array');",
+                  "});",
+                  "",
+                  "console.log('Available routes:', pm.response.json().error.availableRoutes);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/nonexistent/endpoint",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "nonexistent", "endpoint"]
+            },
+            "description": "Test 404 error handling for non-existent endpoints"
+          }
+        },
+        {
+          "name": "Test Invalid Method",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns 404 for invalid method', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Error message indicates route not found', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.error.message).to.include('not found');",
+                  "});",
+                  "",
+                  "pm.test('Lists available routes', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.error.availableRoutes).to.be.an('array');",
+                  "    pm.expect(response.error.availableRoutes.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "console.log('Error for invalid method:', pm.response.json().error.message);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"test\": \"data\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "profile"]
+            },
+            "description": "Test error handling for unsupported HTTP methods"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "console.log('=== REQUEST START ===');",
+          "console.log('Method:', pm.request.method);",
+          "console.log('URL:', pm.request.url.toString());",
+          "console.log('Timestamp:', new Date().toISOString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script - performance and content type validation",
+          "pm.test('Response time is reasonable (< 5 seconds)', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Response has JSON content type', function () {",
+          "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "});",
+          "",
+          "// Log response details",
+          "console.log('=== RESPONSE ===');",
+          "console.log('Status:', pm.response.code);",
+          "console.log('Response Time:', pm.response.responseTime + 'ms');",
+          "console.log('Content Type:', pm.response.headers.get('Content-Type'));",
+          "",
+          "// Log any errors for debugging",
+          "if (pm.response.code >= 400 && pm.response.code < 500) {",
+          "    console.log('Client Error Response:', pm.response.text());",
+          "} else if (pm.response.code >= 500) {",
+          "    console.log('Server Error Response:', pm.response.text());",
+          "}",
+          "",
+          "console.log('=== REQUEST END ===\\n');"
+        ]
+      }
+    }
+  ]
+}

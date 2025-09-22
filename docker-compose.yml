@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: echanneling-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: securepassword123
+      MONGO_INITDB_DATABASE: echanneling
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongodb-init:/docker-entrypoint-initdb.d
+    networks:
+      - echanneling-network
+
+  # Redis Cache (for session management and caching)
+  redis:
+    image: redis:7.2-alpine
+    container_name: echanneling-redis
+    restart: unless-stopped
+    command: redis-server --requirepass redispassword123
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - echanneling-network
+
+  # Backend API Service
+  backend:
+    build: .
+    container_name: echanneling-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: mongodb://admin:securepassword123@mongodb:27017/echanneling?authSource=admin
+      REDIS_URL: redis://:redispassword123@redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      JWT_REFRESH_SECRET: your-super-secret-refresh-key-change-this-in-production
+      EMAIL_FROM: noreply@echanneling.com
+      EMAIL_HOST: smtp.gmail.com
+      EMAIL_PORT: 587
+      EMAIL_USER: your-email@gmail.com
+      EMAIL_PASS: your-app-password
+      CORS_ORIGIN: http://localhost:3000,https://echanneling.com
+      API_RATE_LIMIT: 100
+      BCRYPT_ROUNDS: 12
+      LOG_LEVEL: info
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+      - redis
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    networks:
+      - echanneling-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: echanneling-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - backend
+    networks:
+      - echanneling-network
+
+  # MongoDB Express (Database Management UI - Development Only)
+  mongo-express:
+    image: mongo-express
+    container_name: echanneling-mongo-express
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: securepassword123
+      ME_CONFIG_MONGODB_URL: mongodb://admin:securepassword123@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: mongoexpress123
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+    networks:
+      - echanneling-network
+    profiles:
+      - development
+
+  # Redis Commander (Redis Management UI - Development Only)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: echanneling-redis-commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:redispassword123
+      HTTP_USER: admin
+      HTTP_PASSWORD: rediscommander123
+    ports:
+      - "8082:8081"
+    depends_on:
+      - redis
+    networks:
+      - echanneling-network
+    profiles:
+      - development
+
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  echanneling-network:
+    driver: bridge
