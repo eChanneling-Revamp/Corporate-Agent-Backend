@@ -1,0 +1,257 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String              @id @default(cuid())
+  email             String              @unique
+  password          String
+  firstName         String
+  lastName          String
+  role              UserRole            @default(AGENT)
+  status            UserStatus          @default(ACTIVE)
+  corporateId       String?
+  permissions       String[]
+  lastLoginAt       DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  // Relations
+  corporate         Corporate?          @relation(fields: [corporateId], references: [id])
+  appointments      Appointment[]
+  customers         Customer[]
+  sessions          UserSession[]
+  activityLogs      ActivityLog[]
+  
+  @@map("users")
+}
+
+model Corporate {
+  id                String              @id @default(cuid())
+  name              String
+  registrationNo    String              @unique
+  contactEmail      String
+  contactPhone      String
+  address           String?
+  status            CorporateStatus     @default(ACTIVE)
+  subscriptionPlan  String?
+  subscriptionStart DateTime?
+  subscriptionEnd   DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  // Relations
+  agents            User[]
+  customers         Customer[]
+  appointments      Appointment[]
+  
+  @@map("corporates")
+}
+
+model Customer {
+  id            String              @id @default(cuid())
+  email         String?
+  phone         String
+  firstName     String
+  lastName      String
+  dateOfBirth   DateTime?
+  gender        Gender?
+  address       String?
+  corporateId   String
+  agentId       String
+  status        CustomerStatus      @default(ACTIVE)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  
+  // Relations
+  corporate     Corporate           @relation(fields: [corporateId], references: [id])
+  agent         User                @relation(fields: [agentId], references: [id])
+  appointments  Appointment[]
+  
+  @@map("customers")
+}
+
+model Doctor {
+  id            String              @id @default(cuid())
+  name          String
+  specialization String
+  qualifications String[]
+  hospitalId    String
+  consultationFee Float
+  availability  Json // Store time slots as JSON
+  status        DoctorStatus        @default(AVAILABLE)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  
+  // Relations
+  hospital      Hospital            @relation(fields: [hospitalId], references: [id])
+  appointments  Appointment[]
+  
+  @@map("doctors")
+}
+
+model Hospital {
+  id            String              @id @default(cuid())
+  name          String
+  address       String
+  phone         String
+  email         String?
+  location      Json? // Store coordinates as JSON
+  facilities    String[]
+  status        HospitalStatus      @default(ACTIVE)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  
+  // Relations
+  doctors       Doctor[]
+  appointments  Appointment[]
+  
+  @@map("hospitals")
+}
+
+model Appointment {
+  id                String              @id @default(cuid())
+  customerId        String
+  doctorId          String
+  hospitalId        String
+  corporateId       String
+  agentId           String
+  appointmentDate   DateTime
+  timeSlot          String
+  status            AppointmentStatus   @default(PENDING)
+  consultationFee   Float
+  referenceNumber   String              @unique
+  notes             String?
+  paymentId         String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  // Relations
+  customer          Customer            @relation(fields: [customerId], references: [id])
+  doctor            Doctor              @relation(fields: [doctorId], references: [id])
+  hospital          Hospital            @relation(fields: [hospitalId], references: [id])
+  corporate         Corporate           @relation(fields: [corporateId], references: [id])
+  agent             User                @relation(fields: [agentId], references: [id])
+  payment           Payment?            @relation(fields: [paymentId], references: [id])
+  
+  @@map("appointments")
+}
+
+model Payment {
+  id                String              @id @default(cuid())
+  amount            Float
+  currency          String              @default("LKR")
+  paymentMethod     PaymentMethod
+  status            PaymentStatus       @default(PENDING)
+  transactionId     String?
+  gatewayResponse   Json?
+  paidAt            DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  // Relations
+  appointments      Appointment[]
+  
+  @@map("payments")
+}
+
+model UserSession {
+  id            String              @id @default(cuid())
+  userId        String
+  token         String              @unique
+  refreshToken  String?
+  expiresAt     DateTime
+  createdAt     DateTime            @default(now())
+  
+  // Relations
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_sessions")
+}
+
+model ActivityLog {
+  id            String              @id @default(cuid())
+  userId        String
+  action        String
+  entity        String?
+  entityId      String?
+  details       Json?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime            @default(now())
+  
+  // Relations
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("activity_logs")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  MANAGER
+  AGENT
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum CorporateStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum DoctorStatus {
+  AVAILABLE
+  UNAVAILABLE
+  VACATION
+}
+
+enum HospitalStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+  CASH
+  MOBILE_PAYMENT
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
