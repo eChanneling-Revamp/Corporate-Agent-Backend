@@ -63,7 +63,7 @@ class AuthUtils {
         expiresIn: this.JWT_EXPIRES_IN,
         issuer: 'corporate-agent-module',
         audience: 'echanneling-agents'
-      });
+      } as jwt.SignOptions);
     } catch (error) {
       throw new Error('Access token generation failed');
     }
@@ -78,7 +78,7 @@ class AuthUtils {
         expiresIn: this.JWT_REFRESH_EXPIRES_IN,
         issuer: 'corporate-agent-module',
         audience: 'echanneling-agents'
-      });
+      } as jwt.SignOptions);
     } catch (error) {
       throw new Error('Refresh token generation failed');
     }
